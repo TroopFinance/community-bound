@@ -7,6 +7,8 @@ import { createTokenTransferParams } from '@/services/tx/tokenTransferParams'
 import { createTx } from '@/services/tx/tx-sender'
 import type { TokenTransferParams } from '.'
 import { SafeTxContext } from '../../SafeTxProvider'
+import { useWeb3 } from '@/hooks/wallets/web3'
+import * as PushAPI from '@pushprotocol/restapi'
 
 const ReviewTokenTransfer = ({
   params,
@@ -20,6 +22,7 @@ const ReviewTokenTransfer = ({
   const { setSafeTx, setSafeTxError, setNonce } = useContext(SafeTxContext)
   const { balances } = useBalances()
   const token = balances.items.find((item) => item.tokenInfo.address === params.tokenAddress)
+  const provider = useWeb3()
 
   useEffect(() => {
     if (txNonce !== undefined) {
@@ -37,9 +40,18 @@ const ReviewTokenTransfer = ({
 
     createTx(txParams, txNonce).then(setSafeTx).catch(setSafeTxError)
   }, [params, txNonce, token, setNonce, setSafeTx, setSafeTxError])
-
+  const handleSubmit = async () => {
+    onSubmit()
+    const response = await PushAPI.chat.send({
+      messageContent: `I want to send ${params.amount} of ${token?.tokenInfo.name} to ${params.recipient}`,
+      messageType: 'Text',
+      receiverAddress: 'ab033a57f7ca3eece9b428c99b7c680e76edaeab05bac17b0da6ee5b88dcf9c3',
+      signer: provider?.getSigner(0),
+    })
+    console.log({ response }, 'something')
+  }
   return (
-    <SignOrExecuteForm onSubmit={onSubmit}>
+    <SignOrExecuteForm onSubmit={handleSubmit}>
       {token && <SendAmountBlock amount={params.amount} tokenInfo={token.tokenInfo} />}
 
       <SendToBlock address={params.recipient} />

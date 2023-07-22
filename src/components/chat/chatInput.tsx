@@ -25,15 +25,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: 'green',
         padding: '8px',
-        position: 'absolute',
-        bottom: 0,
         width: '100%',
       }}
     >
       <TextField
-        sx={{ flex: 1, border: 'green', color: 'black' }}
+        sx={{ flex: 1, color: 'black' }}
         variant="outlined"
         placeholder="Type your message..."
         value={message}

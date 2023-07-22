@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { List, ListItem, ListItemText, Divider, Box, Button } from '@mui/material'
+import React, { useEffect, useRef, useState } from 'react'
+import { List, ListItem, ListItemText, Divider, Box, Button, Container } from '@mui/material'
 import axios from 'axios'
 import { ethers } from 'ethers'
 import * as PushAPI from '@pushprotocol/restapi'
@@ -32,9 +32,7 @@ export interface IMessageIPFS {
   fromDID: string
   toDID: string
   messageType: string
-  msg: {
-    messageContent: string
-  }
+  messageContent: string
   signature: string
   sigType: string
   link: string | null
@@ -117,22 +115,28 @@ const chatMsgVariants = {
   },
 }
 const ChatFeed: React.FC = () => {
-  const [chats, setChats] = useState<IMessageIPFS[]>([]) // Updated to IMessageIPFS[]
+  const [chats, setChats] = useState<IFeeds[]>([]) // Updated to IMessageIPFS[]
   const safeAddie = useSafeAddress()
   const [isExploding, setIsExploding] = React.useState(false)
   const provider = useWeb3()
-
-  console.log(provider?.getSigner(0))
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const sortedChats = chats.slice().sort((a, b) => (a.timestamp! > b.timestamp! ? -1 : 1))
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log({ safeAddie })
         // Fetch encrypted data using the provided API
 
         // Fetch chats using the actual API
-        const response = await PushAPI.chat.chats({
-          account: `eip155:0xBBe5e05DBFc5e852513A398682f38479119ff4E6`,
+        const conversationHash = await PushAPI.chat.conversationHash({
+          account: '0xBBe5e05DBFc5e852513A398682f38479119ff4E6',
+          conversationId: 'ab033a57f7ca3eece9b428c99b7c680e76edaeab05bac17b0da6ee5b88dcf9c3',
+        })
+
+        const response = await PushAPI.chat.history({
+          threadhash: conversationHash.threadHash,
+          account: 'eip155:0xBBe5e05DBFc5e852513A398682f38479119ff4E6',
+          limit: 20,
           toDecrypt: false,
         })
 
@@ -140,7 +144,7 @@ const ChatFeed: React.FC = () => {
           groupName: 'ysssss',
         })
         // Process the fetched messages and convert them to the IMessageIPFS type
-        setChats(response as unknown as IMessageIPFS[])
+        setChats(response as unknown as IFeeds[])
         console.log({ response, groupResponse })
       } catch (error) {
         console.error('Error fetching chats:', error)
@@ -149,6 +153,13 @@ const ChatFeed: React.FC = () => {
 
     fetchData()
   }, [])
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat when new messages are added
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }, [chats])
 
   console.log({ chats })
   const handleSendMessage = async (message: string) => {
@@ -160,31 +171,77 @@ const ChatFeed: React.FC = () => {
         const response = await PushAPI.chat.send({
           messageContent: message,
           messageType: 'Text',
-          receiverAddress: 'b0a1d13e6baecd9ce8635e777fe64b1a2e92a5c8e06ddd44111955b1a5083f02',
+          receiverAddress: 'ab033a57f7ca3eece9b428c99b7c680e76edaeab05bac17b0da6ee5b88dcf9c3',
           signer: provider.getSigner(0),
         })
 
         // After sending the message, you can update the chat feed state with the new message
-        setChats((prevChats) => [
-          ...prevChats,
-          {
-            fromCAIP10: '',
-            toCAIP10: 'receiver_did', // Update this with the receiver's DID
-            fromDID: '',
-            toDID: 'receiver_did', // Update this with the receiver's DID
-            messageType: 'Text',
-            msg: {
-              messageContent: message,
-            },
-            signature: 'signature', // Replace with the signature from the API response if available
-            sigType: 'signature_type', // Replace with the signature type from the API response if available
-            link: null,
-            timestamp: Date.now(), // Use the current timestamp or the timestamp from the API response if available
-            encType: 'encryption_type', // Replace with the encryption type from the API response if available
-            encryptedSecret: 'encrypted_secret', // Replace with the encrypted secret from the API response if available
-          },
-        ])
-        console.log({ response })
+        setChats((prevChats) =>
+          prevChats.length > 0
+            ? [
+                ...prevChats,
+                {
+                  msg: {
+                    fromCAIP10: '',
+                    toCAIP10: 'receiver_did', // Update this with the receiver's DID
+                    fromDID: '',
+                    toDID: 'receiver_did', // Update this with the receiver's DID
+                    messageType: 'Text',
+                    messageContent: message,
+                    signature: 'signature', // Replace with the signature from the API response if available
+                    sigType: 'signature_type', // Replace with the signature type from the API response if available
+                    link: null,
+                    timestamp: Date.now(), // Use the current timestamp or the timestamp from the API response if available
+                    encType: 'encryption_type', // Replace with the encryption type from the API response if available
+                    encryptedSecret: 'encrypted_secret', // Replace with the encrypted secret from the API response if available
+                  },
+                  did: '', // Update this with the appropriate value
+                  wallets: '', // Update this with the appropriate value
+                  profilePicture: null, // Update this with the appropriate value or keep it as null
+                  publicKey: null, // Update this with the appropriate value or keep it as null
+                  about: null, // Update this with the appropriate value or keep it as null
+                  threadhash: null, // Update this with the appropriate value or keep it as null
+                  intent: null, // Update this with the appropriate value or keep it as null
+                  intentSentBy: null, // Update this with the appropriate value or keep it as null
+                  intentTimestamp: new Date(), // Update this with the appropriate value or keep it as the current timestamp
+                  combinedDID: '', // Update this with the appropriate value
+                  cid: undefined, // Optional: Update this with the appropriate value or keep it as undefined
+                  chatId: undefined, // Optional: Update this with the appropriate value or keep it as undefined
+                  groupInformation: undefined, // Optional: Update this with the appropriate value or keep it as undefined
+                },
+              ]
+            : [
+                {
+                  msg: {
+                    fromCAIP10: '',
+                    toCAIP10: 'receiver_did',
+                    fromDID: '',
+                    toDID: 'receiver_did',
+                    messageType: 'Text',
+                    messageContent: message,
+                    signature: 'signature',
+                    sigType: 'signature_type',
+                    link: null,
+                    timestamp: Date.now(),
+                    encType: 'encryption_type',
+                    encryptedSecret: 'encrypted_secret',
+                  },
+                  did: '',
+                  wallets: '',
+                  profilePicture: null,
+                  publicKey: null,
+                  about: null,
+                  threadhash: null,
+                  intent: null,
+                  intentSentBy: null,
+                  intentTimestamp: new Date(),
+                  combinedDID: '',
+                  cid: undefined,
+                  chatId: undefined,
+                  groupInformation: undefined,
+                },
+              ],
+        )
       }
     } catch (error) {
       console.error('Error sending message:', error)
@@ -192,40 +249,70 @@ const ChatFeed: React.FC = () => {
   }
 
   return (
-    <List sx={{ width: '100%', height: '80vh', backgroundColor: 'black' }}>
-      {chats.map((chat) => (
-        <motion.div
-          variants={chatMsgVariants}
-          style={{
-            width: '50%',
-            padding: '8px',
-            marginBottom: '8px',
-            marginLeft: '8px',
-
-            border: 'solid 0.5px white',
-            borderRadius: '8px',
-          }}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <Box>
-            <ListItemText color="white" primary={chat?.msg?.messageContent} /> {/* Access the property to render */}
-            <Button variant="contained" color="primary" onClick={() => setIsExploding(true)}>
-              Chapeau!
-              {isExploding ? (
-                <ConfettiExplosion
-                  duration={2000}
-                  style={{ position: 'absolute', bottom: 1, right: 1 }}
-                  onComplete={() => setIsExploding(false)}
-                />
-              ) : null}
-            </Button>
-          </Box>
-        </motion.div>
-      ))}
+    <>
       <ChatInput onSendMessage={handleSendMessage} />
-    </List>
+
+      <Container
+        sx={{
+          width: '100%',
+          minHeight: '40vh',
+          backgroundColor: 'black',
+          overflow: 'hidden',
+          paddingBottom: '56px', // To accommodate the height of the input box
+        }}
+        ref={chatContainerRef}
+      >
+        <List sx={{ height: '100%', overflowY: 'auto' }}>
+          {sortedChats.length === 0 || !sortedChats ? (
+            <motion.div
+              style={{
+                textAlign: 'center',
+                color: 'white',
+                paddingTop: '16px',
+              }}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              No messages yet.
+            </motion.div>
+          ) : (
+            sortedChats?.map((chat, index) => (
+              <motion.div
+                key={index}
+                variants={chatMsgVariants}
+                style={{
+                  width: '50%',
+                  padding: '8px',
+                  marginBottom: '8px',
+                  marginLeft: '8px',
+                  border: 'solid 0.5px white',
+                  borderRadius: '8px',
+                }}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <Box>
+                  <p>{chat.fromCAIP10.replace('eip155:', '')} </p>
+                  <ListItemText sx={{ marginBottom: '16px' }} color="white" primary={chat.messageContent} />
+                  <Button variant="contained" color="primary" onClick={() => setIsExploding(true)}>
+                    Chapeau!
+                    {isExploding ? (
+                      <ConfettiExplosion
+                        duration={2000}
+                        style={{ position: 'absolute', bottom: 1, right: 1 }}
+                        onComplete={() => setIsExploding(false)}
+                      />
+                    ) : null}
+                  </Button>
+                </Box>
+              </motion.div>
+            ))
+          )}
+        </List>
+      </Container>
+    </>
   )
 }
 
