@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { List, ListItem, ListItemText, Divider, Box, Button, Container } from '@mui/material'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { List, ListItem, ListItemText, Divider, Box, Button, Container, CircularProgress } from '@mui/material'
 import axios from 'axios'
 import { ethers } from 'ethers'
 import * as PushAPI from '@pushprotocol/restapi'
@@ -8,6 +8,8 @@ import useSafeAddress from '@/hooks/useSafeAddress'
 import { motion } from 'framer-motion'
 import ConfettiExplosion from 'react-confetti-explosion'
 import { useWeb3 } from '@/hooks/wallets/web3'
+import useTxQueue from '@/hooks/useTxQueue'
+import { getLatestTransactions } from '@/utils/tx-list'
 
 export interface IFeeds {
   msg: IMessageIPFS
@@ -120,8 +122,12 @@ const ChatFeed: React.FC = () => {
   const [isExploding, setIsExploding] = React.useState(false)
   const provider = useWeb3()
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const [chatsLoading, setChatsLoading] = useState(true)
   const sortedChats = chats.slice().sort((a, b) => (a.timestamp! > b.timestamp! ? -1 : 1))
+  const { page, loading } = useTxQueue()
+  const queuedTxns = useMemo(() => getLatestTransactions(page?.results), [page?.results])
 
+  console.log({ queuedTxns })
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -144,6 +150,8 @@ const ChatFeed: React.FC = () => {
         console.log({ response })
       } catch (error) {
         console.error('Error fetching chats:', error)
+      } finally {
+        setChatsLoading(false)
       }
     }
 
@@ -157,7 +165,6 @@ const ChatFeed: React.FC = () => {
     }
   }, [chats])
 
-  console.log({ chats })
   const handleSendMessage = async (message: string) => {
     try {
       if (window.ethereum) {
@@ -213,6 +220,25 @@ const ChatFeed: React.FC = () => {
       console.error('Error sending message:', error)
     }
   }
+  if (chatsLoading)
+    return (
+      <Container
+        sx={{
+          width: '100%',
+          minHeight: '40vh',
+          backgroundColor: 'black',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+          display: 'flex',
+          paddingBottom: '56px', // To accommodate the height of the input box
+        }}
+        ref={chatContainerRef}
+      >
+        <CircularProgress />
+      </Container>
+    )
 
   return (
     <>
@@ -223,6 +249,7 @@ const ChatFeed: React.FC = () => {
           width: '100%',
           minHeight: '40vh',
           backgroundColor: 'black',
+          borderRadius: '8px',
           overflow: 'hidden',
           paddingBottom: '56px', // To accommodate the height of the input box
         }}
