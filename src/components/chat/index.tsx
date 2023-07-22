@@ -196,7 +196,7 @@ const ChatFeed: React.FC = () => {
   useEffect(() => {
     const fetchAddressesData = async () => {
       try {
-        const dataPromises = safe.owners?.map((address: string) => fetchData(address.value))
+        const dataPromises = safe.owners?.map((address: { value: string }) => fetchData(address.value))
         const dataArray = await Promise.all(dataPromises)
         const updatedDataList = dataArray.map((data, index) => {
           return data?.identity ? data.identity : safe.owners[index].value
@@ -462,7 +462,7 @@ const ChatFeed: React.FC = () => {
             {membersLoading ? (
               <CircularProgress />
             ) : (
-              dataList?.map((member, index) => (
+              dataList?.map((member: string, index: number) => (
                 <>
                   <ListItemText
                     key={index}
