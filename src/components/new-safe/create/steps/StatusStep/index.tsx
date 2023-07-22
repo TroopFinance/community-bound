@@ -22,6 +22,7 @@ import { AppRoutes } from '@/config/routes'
 import { lightPalette } from '@safe-global/safe-react-components'
 import { useCurrentChain } from '@/hooks/useChains'
 import { ethers } from 'ethers'
+import { useWeb3 } from '@/hooks/wallets/web3'
 
 export const SAFE_PENDING_CREATION_STORAGE_KEY = 'pendingSafe'
 
@@ -47,10 +48,11 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
   const willRelay = !!(data.willRelay || pendingSafe?.willRelay)
   const initialStatus = getInitialCreationStatus(willRelay)
   const [status, setStatus] = useState<SafeCreationStatus>(initialStatus)
+  const provider = useWeb3()
 
   const { handleCreateSafe } = useSafeCreation(pendingSafe, setPendingSafe, status, setStatus, willRelay)
   const members = data?.owners?.length > 0 ? data.owners.map((item) => item?.address) : []
-
+  const filteredMembers = members?.filter((item) => item !== '0xBBe5e05DBFc5e852513A398682f38479119ff4E6') || []
   useSafeCreationEffects({
     pendingSafe,
     setPendingSafe,
@@ -78,24 +80,21 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
 
       try {
         if (window.ethereum) {
-          const provider = new ethers.providers.Web3Provider(window.ethereum)
-          const signer = provider.getSigner()
-
           const createGroupRes = await PushAPI.chat.createGroup({
             groupName: data.name,
             groupDescription: data.name,
-            members: members,
+            members: filteredMembers,
             groupImage: null,
             admins: [safeAddress],
             isPublic: true,
-            signer: signer,
+            signer: provider?.getSigner(0),
           })
+          console.log({ createGroupRes })
+          router.push(getRedirect(chainPrefix, safeAddress, router.query?.safeViewRedirectURL))
         }
       } catch (error) {
         console.log({ error })
       }
-
-      router.push(getRedirect(chainPrefix, safeAddress, router.query?.safeViewRedirectURL))
     }
   }, [chainPrefix, pendingSafe, router, setPendingSafe])
 

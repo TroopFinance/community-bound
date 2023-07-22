@@ -7,6 +7,7 @@ import ChatInput from './chatInput'
 import useSafeAddress from '@/hooks/useSafeAddress'
 import { motion } from 'framer-motion'
 import ConfettiExplosion from 'react-confetti-explosion'
+import { useWeb3 } from '@/hooks/wallets/web3'
 
 export interface IFeeds {
   msg: IMessageIPFS
@@ -31,7 +32,9 @@ export interface IMessageIPFS {
   fromDID: string
   toDID: string
   messageType: string
-  messageContent: string
+  msg: {
+    messageContent: string
+  }
   signature: string
   sigType: string
   link: string | null
@@ -117,6 +120,9 @@ const ChatFeed: React.FC = () => {
   const [chats, setChats] = useState<IMessageIPFS[]>([]) // Updated to IMessageIPFS[]
   const safeAddie = useSafeAddress()
   const [isExploding, setIsExploding] = React.useState(false)
+  const provider = useWeb3()
+
+  console.log(provider?.getSigner(0))
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,12 +132,12 @@ const ChatFeed: React.FC = () => {
 
         // Fetch chats using the actual API
         const response = await PushAPI.chat.chats({
-          account: `eip155:${safeAddie}`,
+          account: `eip155:0xBBe5e05DBFc5e852513A398682f38479119ff4E6`,
           toDecrypt: false,
         })
 
         const groupResponse = await PushAPI.chat.getGroupByName({
-          groupName: 'last try',
+          groupName: 'ysssss',
         })
         // Process the fetched messages and convert them to the IMessageIPFS type
         setChats(response as unknown as IMessageIPFS[])
@@ -155,7 +161,7 @@ const ChatFeed: React.FC = () => {
           messageContent: message,
           messageType: 'Text',
           receiverAddress: 'b0a1d13e6baecd9ce8635e777fe64b1a2e92a5c8e06ddd44111955b1a5083f02',
-          signer: signer,
+          signer: provider.getSigner(0),
         })
 
         // After sending the message, you can update the chat feed state with the new message
@@ -167,7 +173,9 @@ const ChatFeed: React.FC = () => {
             fromDID: '',
             toDID: 'receiver_did', // Update this with the receiver's DID
             messageType: 'Text',
-            messageContent: message,
+            msg: {
+              messageContent: message,
+            },
             signature: 'signature', // Replace with the signature from the API response if available
             sigType: 'signature_type', // Replace with the signature type from the API response if available
             link: null,
@@ -202,7 +210,7 @@ const ChatFeed: React.FC = () => {
           exit="exit"
         >
           <Box>
-            <ListItemText primary={chat.messageContent} /> {/* Access the property to render */}
+            <ListItemText color="white" primary={chat?.msg?.messageContent} /> {/* Access the property to render */}
             <Button variant="contained" color="primary" onClick={() => setIsExploding(true)}>
               Chapeau!
               {isExploding ? (
