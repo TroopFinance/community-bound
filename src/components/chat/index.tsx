@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { List, ListItem, ListItemText, Divider, Box, Button, Container, CircularProgress } from '@mui/material'
+import {
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  Box,
+  Button,
+  Container,
+  CircularProgress,
+  Avatar,
+  Typography,
+} from '@mui/material'
 import axios from 'axios'
 import { ethers } from 'ethers'
 import * as PushAPI from '@pushprotocol/restapi'
@@ -10,6 +21,9 @@ import ConfettiExplosion from 'react-confetti-explosion'
 import { useWeb3 } from '@/hooks/wallets/web3'
 import useTxQueue from '@/hooks/useTxQueue'
 import { getLatestTransactions } from '@/utils/tx-list'
+import { AppRoutes } from '@/config/routes'
+import { useRouter } from 'next/router'
+import useSafeInfo from '@/hooks/useSafeInfo'
 
 export interface IFeeds {
   msg: IMessageIPFS
@@ -123,11 +137,81 @@ const ChatFeed: React.FC = () => {
   const provider = useWeb3()
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [chatsLoading, setChatsLoading] = useState(true)
+  const [membersLoading, setMembersLoading] = useState(true)
+
   const sortedChats = chats.slice().sort((a, b) => (a.timestamp! > b.timestamp! ? -1 : 1))
   const { page, loading } = useTxQueue()
-  const queuedTxns = useMemo(() => getLatestTransactions(page?.results), [page?.results])
+  const [dataList, setDataList] = useState<any>([])
+  const { safe } = useSafeInfo()
 
-  console.log({ queuedTxns })
+  const queuedTxns = useMemo(() => getLatestTransactions(page?.results), [page?.results])
+  const router = useRouter()
+  const queueUrl = useMemo(
+    () => ({
+      pathname: AppRoutes.transactions.queue,
+      query: { safe: router.query.safe },
+    }),
+    [router],
+  )
+  const fetchData = async (address: string) => {
+    const baseUrl = 'https://relation-service.next.id'
+
+    const query = `
+      query {
+        identity(platform: "ethereum", identity: "${address}") {
+          displayName
+          neighbor(depth: 3) {
+            identity {
+              platform
+              identity
+              displayName
+            }
+          }
+        }
+      }
+    `
+
+    try {
+      const response = await fetch(baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+        }),
+      })
+      const data = await response.json()
+      console.log({ data })
+      setDataList((prevDataList: any[]) => {
+        prevDataList?.length > 0 ? [...prevDataList, data] : [data]
+      })
+      return data
+    } catch (error) {
+      console.error(`Error fetching data for address ${address}:`, error)
+      return null
+    }
+  }
+
+  useEffect(() => {
+    const fetchAddressesData = async () => {
+      try {
+        const dataPromises = safe.owners?.map((address: string) => fetchData(address.value))
+        const dataArray = await Promise.all(dataPromises)
+        const updatedDataList = dataArray.map((data, index) => {
+          return data?.identity ? data.identity : safe.owners[index].value
+        })
+        setDataList(updatedDataList)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setMembersLoading(false)
+      }
+    }
+
+    fetchAddressesData()
+  }, [])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -147,7 +231,6 @@ const ChatFeed: React.FC = () => {
         })
         // Process the fetched messages and convert them to the IMessageIPFS type
         setChats(response as unknown as IMessageIPFS[])
-        console.log({ response })
       } catch (error) {
         console.error('Error fetching chats:', error)
       } finally {
@@ -164,6 +247,11 @@ const ChatFeed: React.FC = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
   }, [chats])
+
+  const avatarImageUrl = (address: string) => {
+    const encodedAddress = encodeURIComponent(address)
+    return `https://api.adorable.io/avatars/200/${encodedAddress}.png`
+  }
 
   const handleSendMessage = async (message: string) => {
     try {
@@ -240,72 +328,167 @@ const ChatFeed: React.FC = () => {
       </Container>
     )
 
+  const handleButtonClick = () => {
+    setIsExploding(true)
+  }
+  console.log({ dataList })
   return (
-    <>
-      <ChatInput onSendMessage={handleSendMessage} />
-
+    <Container
+      sx={{
+        width: '100%',
+        minHeight: '40vh',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        paddingBottom: '56px', // To accommodate the height of the input box>
+      }}
+    >
       <Container
         sx={{
-          width: '100%',
+          width: '60%',
           minHeight: '40vh',
-          backgroundColor: 'black',
           borderRadius: '8px',
-          overflow: 'hidden',
-          paddingBottom: '56px', // To accommodate the height of the input box
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          marginLeft: '16px',
+          padding: '12px', // To accommodate the height of the input box
         }}
-        ref={chatContainerRef}
       >
-        <List sx={{ height: '100%', overflowY: 'auto' }}>
-          {sortedChats.length === 0 || !sortedChats ? (
-            <motion.div
-              style={{
-                textAlign: 'center',
-                color: 'white',
-                paddingTop: '16px',
-              }}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              No messages yet.
-            </motion.div>
-          ) : (
-            sortedChats?.map((chat, index) => (
+        <Typography sx={{ marginBottom: '16px' }} variant="h5" component="h5">
+          Feed
+        </Typography>
+        <Container
+          sx={{
+            width: '100%',
+            minHeight: '40vh',
+            backgroundColor: 'black',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+            padding: '12px', // To accommodate the height of the input box
+          }}
+          ref={chatContainerRef}
+        >
+          <ChatInput onSendMessage={handleSendMessage} />
+          <List sx={{ height: '100%', overflowY: 'auto' }}>
+            {sortedChats.length === 0 || !sortedChats ? (
               <motion.div
-                key={index}
-                variants={chatMsgVariants}
                 style={{
-                  width: '50%',
-                  padding: '8px',
-                  marginBottom: '8px',
-                  marginLeft: '8px',
-                  border: 'solid 0.5px white',
-                  borderRadius: '8px',
+                  textAlign: 'center',
+                  color: 'white',
+                  paddingTop: '16px',
                 }}
                 initial="initial"
                 animate="animate"
                 exit="exit"
               >
-                <Box>
-                  <p>{chat.fromCAIP10.replace('eip155:', '')} </p>
-                  <ListItemText sx={{ marginBottom: '16px' }} color="white" primary={chat.messageContent} />
-                  <Button variant="contained" color="primary" onClick={() => setIsExploding(true)}>
-                    Chapeau!
-                    {isExploding ? (
-                      <ConfettiExplosion
-                        duration={2000}
-                        style={{ position: 'absolute', bottom: 1, right: 1 }}
-                        onComplete={() => setIsExploding(false)}
-                      />
-                    ) : null}
-                  </Button>
-                </Box>
+                No messages yet.
               </motion.div>
-            ))
-          )}
-        </List>
+            ) : (
+              sortedChats?.map((chat, index) => (
+                <motion.div
+                  key={chat.timestamp}
+                  variants={chatMsgVariants}
+                  style={{
+                    width: '80%',
+                    padding: '8px',
+                    marginBottom: '8px',
+                    marginLeft: '8px',
+                    border: 'solid 0.5px white',
+                    borderRadius: '8px',
+                    whiteSpace: 'break-spaces',
+                  }}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <p>{chat.fromCAIP10.replace('eip155:', '')} </p>
+                  <ListItemText
+                    sx={{ marginBottom: '16px', textOverflow: 'clip' }}
+                    color="white"
+                    primary={chat.messageContent}
+                  />
+                  {/* <Button variant="contained" color="primary" onClick={handleButtonClick}>
+                  Chapeau!
+                  {isExploding ? (
+                    <ConfettiExplosion
+                      duration={2000}
+                      style={{ position: 'absolute', bottom: 1, right: 1 }}
+                      onComplete={() => setIsExploding(false)}
+                    />
+                  ) : null}
+                </Button> */}
+                </motion.div>
+              ))
+            )}
+          </List>
+        </Container>
       </Container>
-    </>
+      <Container
+        sx={{
+          width: '35%',
+          minHeight: '40vh',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: '12px', // To accommodate the height of the input box
+        }}
+      >
+        <Typography sx={{ marginBottom: '16px' }} variant="h5" component="h5">
+          Members
+        </Typography>
+        <Container
+          sx={{
+            width: '100%',
+            backgroundColor: 'black',
+            padding: '16px',
+            borderRadius: '8px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+          }}
+        >
+          <List sx={{ height: '100%', overflowY: 'auto', width: '100%' }}>
+            {membersLoading ? (
+              <CircularProgress />
+            ) : (
+              dataList?.map((member, index) => (
+                <>
+                  <ListItemText
+                    key={index}
+                    sx={{
+                      marginBottom: '16px',
+                      textOverflow: 'clip',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between', // Align items horizontally
+                    }}
+                    color="white"
+                    secondary={member}
+                    primary={
+                      <Avatar
+                        src={avatarImageUrl(member)} // Random avatar based on member's value
+                        sx={{ marginRight: '8px' }}
+                      />
+                    }
+                  />
+                </>
+              ))
+            )}
+          </List>
+        </Container>
+      </Container>
+    </Container>
   )
 }
 

@@ -39,10 +39,14 @@ const ReviewTokenTransfer = ({
     )
 
     createTx(txParams, txNonce).then(setSafeTx).catch(setSafeTxError)
+    // onchain call: createProposal(safeTx, "some message")
   }, [params, txNonce, token, setNonce, setSafeTx, setSafeTxError])
+  console.log({ txNonce, setSafeTx })
+
   const handleSubmit = async () => {
     onSubmit()
     const response = await PushAPI.chat.send({
+      // read from chain: readProposal(safeTx) => SafeTransaction API (we have data about proposal) + "some message"
       messageContent: `I want to send ${params.amount} of ${token?.tokenInfo.name} to ${params.recipient}`,
       messageType: 'Text',
       receiverAddress: 'ab033a57f7ca3eece9b428c99b7c680e76edaeab05bac17b0da6ee5b88dcf9c3',

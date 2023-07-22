@@ -89,7 +89,6 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
             isPublic: true,
             signer: provider?.getSigner(0),
           })
-          console.log({ createGroupRes })
           router.push(getRedirect(chainPrefix, safeAddress, router.query?.safeViewRedirectURL))
         }
       } catch (error) {
