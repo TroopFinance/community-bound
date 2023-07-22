@@ -52,6 +52,7 @@ const OwnerPolicyStep = ({
   const { handleSubmit, control, watch, formState, getValues, setValue, trigger } = formMethods
 
   const threshold = watch(OwnerPolicyStepFields.threshold)
+  const owners = watch(OwnerPolicyStepFields.owners)
 
   const {
     fields: ownerFields,

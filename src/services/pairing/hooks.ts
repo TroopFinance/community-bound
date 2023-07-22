@@ -38,16 +38,6 @@ export const useInitPairing = () => {
   const canConnect = !connector?.connected && !isConnecting
   const isSupported = isPairingSupported(chain?.disabledWallets)
 
-  useEffect(() => {
-    const _pairingConnector = new WalletConnect({
-      bridge: WC_BRIDGE,
-      storageId: local.getPrefixedKey(PAIRING_MODULE_STORAGE_ID),
-      clientMeta: getClientMeta(),
-    })
-
-    setPairingConnector(_pairingConnector)
-  }, [])
-
   const createSession = useCallback(() => {
     if (!canConnect || !chain || !isSupported || !onboard) {
       return

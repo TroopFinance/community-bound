@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, Button, Divider, Paper, Tooltip, Typography } from '@mui/material'
 import { useRouter } from 'next/router'
+import * as PushAPI from '@pushprotocol/restapi'
 
 import Track from '@/components/common/Track'
 import { CREATE_SAFE_EVENTS } from '@/services/analytics/events/createLoadSafe'
@@ -20,6 +21,7 @@ import layoutCss from '@/components/new-safe/create/styles.module.css'
 import { AppRoutes } from '@/config/routes'
 import { lightPalette } from '@safe-global/safe-react-components'
 import { useCurrentChain } from '@/hooks/useChains'
+import { ethers } from 'ethers'
 
 export const SAFE_PENDING_CREATION_STORAGE_KEY = 'pendingSafe'
 
@@ -47,6 +49,7 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
   const [status, setStatus] = useState<SafeCreationStatus>(initialStatus)
 
   const { handleCreateSafe } = useSafeCreation(pendingSafe, setPendingSafe, status, setStatus, willRelay)
+  const members = data?.owners?.length > 0 ? data.owners.map((item) => item?.address) : []
 
   useSafeCreationEffects({
     pendingSafe,
@@ -65,13 +68,33 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
     void handleCreateSafe()
   }, [handleCreateSafe, initialStatus])
 
-  const onFinish = useCallback(() => {
+  const onFinish = useCallback(async () => {
     trackEvent(CREATE_SAFE_EVENTS.GET_STARTED)
 
     const { safeAddress } = pendingSafe || {}
 
     if (safeAddress) {
       setPendingSafe(undefined)
+
+      try {
+        if (window.ethereum) {
+          const provider = new ethers.providers.Web3Provider(window.ethereum)
+          const signer = provider.getSigner()
+
+          const createGroupRes = await PushAPI.chat.createGroup({
+            groupName: data.name,
+            groupDescription: data.name,
+            members: members,
+            groupImage: null,
+            admins: [safeAddress],
+            isPublic: true,
+            signer: signer,
+          })
+        }
+      } catch (error) {
+        console.log({ error })
+      }
+
       router.push(getRedirect(chainPrefix, safeAddress, router.query?.safeViewRedirectURL))
     }
   }, [chainPrefix, pendingSafe, router, setPendingSafe])

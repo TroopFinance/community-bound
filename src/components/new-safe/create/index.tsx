@@ -105,7 +105,6 @@ const CreateSafe = () => {
     name: defaultOwnerAddressBookName || wallet?.ens || '',
     address: wallet?.address || '',
   }
-
   const [safeName, setSafeName] = useState('')
   const [dynamicHint, setDynamicHint] = useState<CreateSafeInfoItem>()
   const [activeStep, setActiveStep] = useState(0)

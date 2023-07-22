@@ -7,7 +7,6 @@ import { ErrorCode } from '@ethersproject/logger'
 import { type ConnectedWallet } from '@/hooks/wallets/useOnboard'
 import { getWeb3ReadOnly, isSmartContract } from '@/hooks/wallets/web3'
 import { WALLET_KEYS } from '@/hooks/wallets/consts'
-import { WALLET_CONNECT_V1_MODULE_NAME } from '@/hooks/wallets/wallets'
 
 const isWCRejection = (err: Error): boolean => {
   return /rejected/.test(err?.message)
@@ -23,7 +22,6 @@ export const isWalletRejection = (err: EthersError | Error): boolean => {
 
 export const WalletNames = {
   METAMASK: ProviderLabel.MetaMask,
-  WALLET_CONNECT: WALLET_CONNECT_V1_MODULE_NAME,
   WALLET_CONNECT_V2: 'WalletConnect',
   SAFE_MOBILE_PAIRING: PAIRING_MODULE_LABEL,
 }
@@ -42,9 +40,6 @@ export const isWalletUnlocked = async (walletName: string): Promise<boolean> => 
   }
 
   // Wallet connect creates a localStorage entry when connected and removes it when disconnected
-  if (walletName === WalletNames.WALLET_CONNECT) {
-    return window.localStorage.getItem('walletconnect') !== null
-  }
 
   // Our own Safe mobile pairing module
   if (walletName === WalletNames.SAFE_MOBILE_PAIRING && hasValidPairingSession()) {
