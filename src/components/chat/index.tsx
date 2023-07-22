@@ -42,18 +42,18 @@ export interface IMessageIPFS {
 }
 
 export interface GroupDTO {
-  members: {
+  members: Array<{
     wallet: string
     publicKey: string
     isAdmin: boolean
     image: string
-  }[]
-  pendingMembers: {
+  }>
+  pendingMembers: Array<{
     wallet: string
     publicKey: string
     isAdmin: boolean
     image: string
-  }[]
+  }>
   contractAddressERC20: string | null
   numberOfERC20: number
   contractAddressNFT: string | null
@@ -115,7 +115,7 @@ const chatMsgVariants = {
   },
 }
 const ChatFeed: React.FC = () => {
-  const [chats, setChats] = useState<IFeeds[]>([]) // Updated to IMessageIPFS[]
+  const [chats, setChats] = useState<IMessageIPFS[]>([]) // Updated to IMessageIPFS[]
   const safeAddie = useSafeAddress()
   const [isExploding, setIsExploding] = React.useState(false)
   const provider = useWeb3()
@@ -139,13 +139,9 @@ const ChatFeed: React.FC = () => {
           limit: 20,
           toDecrypt: false,
         })
-
-        const groupResponse = await PushAPI.chat.getGroupByName({
-          groupName: 'ysssss',
-        })
         // Process the fetched messages and convert them to the IMessageIPFS type
-        setChats(response as unknown as IFeeds[])
-        console.log({ response, groupResponse })
+        setChats(response as unknown as IMessageIPFS[])
+        console.log({ response })
       } catch (error) {
         console.error('Error fetching chats:', error)
       }
@@ -181,64 +177,34 @@ const ChatFeed: React.FC = () => {
             ? [
                 ...prevChats,
                 {
-                  msg: {
-                    fromCAIP10: '',
-                    toCAIP10: 'receiver_did', // Update this with the receiver's DID
-                    fromDID: '',
-                    toDID: 'receiver_did', // Update this with the receiver's DID
-                    messageType: 'Text',
-                    messageContent: message,
-                    signature: 'signature', // Replace with the signature from the API response if available
-                    sigType: 'signature_type', // Replace with the signature type from the API response if available
-                    link: null,
-                    timestamp: Date.now(), // Use the current timestamp or the timestamp from the API response if available
-                    encType: 'encryption_type', // Replace with the encryption type from the API response if available
-                    encryptedSecret: 'encrypted_secret', // Replace with the encrypted secret from the API response if available
-                  },
-                  did: '', // Update this with the appropriate value
-                  wallets: '', // Update this with the appropriate value
-                  profilePicture: null, // Update this with the appropriate value or keep it as null
-                  publicKey: null, // Update this with the appropriate value or keep it as null
-                  about: null, // Update this with the appropriate value or keep it as null
-                  threadhash: null, // Update this with the appropriate value or keep it as null
-                  intent: null, // Update this with the appropriate value or keep it as null
-                  intentSentBy: null, // Update this with the appropriate value or keep it as null
-                  intentTimestamp: new Date(), // Update this with the appropriate value or keep it as the current timestamp
-                  combinedDID: '', // Update this with the appropriate value
-                  cid: undefined, // Optional: Update this with the appropriate value or keep it as undefined
-                  chatId: undefined, // Optional: Update this with the appropriate value or keep it as undefined
-                  groupInformation: undefined, // Optional: Update this with the appropriate value or keep it as undefined
+                  fromCAIP10: '',
+                  toCAIP10: 'receiver_did', // Update this with the receiver's DID
+                  fromDID: '',
+                  toDID: 'receiver_did', // Update this with the receiver's DID
+                  messageType: 'Text',
+                  messageContent: message,
+                  signature: 'signature', // Replace with the signature from the API response if available
+                  sigType: 'signature_type', // Replace with the signature type from the API response if available
+                  link: null,
+                  timestamp: Date.now(), // Use the current timestamp or the timestamp from the API response if available
+                  encType: 'encryption_type', // Replace with the encryption type from the API response if available
+                  encryptedSecret: 'encrypted_secret', // Replace with the encrypted secret from the API response if available
                 },
               ]
             : [
                 {
-                  msg: {
-                    fromCAIP10: '',
-                    toCAIP10: 'receiver_did',
-                    fromDID: '',
-                    toDID: 'receiver_did',
-                    messageType: 'Text',
-                    messageContent: message,
-                    signature: 'signature',
-                    sigType: 'signature_type',
-                    link: null,
-                    timestamp: Date.now(),
-                    encType: 'encryption_type',
-                    encryptedSecret: 'encrypted_secret',
-                  },
-                  did: '',
-                  wallets: '',
-                  profilePicture: null,
-                  publicKey: null,
-                  about: null,
-                  threadhash: null,
-                  intent: null,
-                  intentSentBy: null,
-                  intentTimestamp: new Date(),
-                  combinedDID: '',
-                  cid: undefined,
-                  chatId: undefined,
-                  groupInformation: undefined,
+                  fromCAIP10: '',
+                  toCAIP10: 'receiver_did',
+                  fromDID: '',
+                  toDID: 'receiver_did',
+                  messageType: 'Text',
+                  messageContent: message,
+                  signature: 'signature',
+                  sigType: 'signature_type',
+                  link: null,
+                  timestamp: Date.now(),
+                  encType: 'encryption_type',
+                  encryptedSecret: 'encrypted_secret',
                 },
               ],
         )
