@@ -78,7 +78,7 @@ export const CreateSafeStatus = ({ data, setProgressColor }: StepRenderProps<New
       setPendingSafe(undefined)
 
       try {
-        if (window.ethereum) {
+        if (typeof window !== 'undefined' && window.ethereum) {
           const createGroupRes = await PushAPI.chat.createGroup({
             groupName: data.name,
             groupDescription: data.name,

@@ -93,7 +93,7 @@ const ExecuteForm = ({
     try {
       const executedTxId = await executeTx(txOptions, safeTx, txId, origin, willRelay)
       setTxFlow(<SuccessScreen txId={executedTxId} />, undefined, false)
-      if (window.ethereum) {
+      if (typeof window !== 'undefined' && window.ethereum) {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)

@@ -163,7 +163,7 @@ const ChatFeed: React.FC = () => {
         }
       }
     `
-    if (window.ethereum) {
+    if (typeof window !== 'undefined' && window.ethereum) {
       const provider = new ethers.providers.Web3Provider(window.ethereum)
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
       const tx = await contract.balanceOf(address)
@@ -207,7 +207,7 @@ const ChatFeed: React.FC = () => {
     }
 
     fetchAddressesData()
-  }, [window.ethereum])
+  }, [typeof window !== 'undefined' && window.ethereum])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -252,7 +252,7 @@ const ChatFeed: React.FC = () => {
 
   const handleSendMessage = async (message: string) => {
     try {
-      if (window.ethereum) {
+      if (typeof window !== undefined && window.ethereum) {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
 
@@ -324,7 +324,7 @@ const ChatFeed: React.FC = () => {
         <CircularProgress />
       </Container>
     )
-  console.log({ dataList })
+
   const handleButtonClick = () => {
     setIsExploding(true)
   }
