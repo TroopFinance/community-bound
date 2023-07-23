@@ -38,7 +38,7 @@ export const SuccessScreen = ({ txId }: { txId: string }) => {
 
   const homeLink: UrlObject = {
     pathname: AppRoutes.home,
-    query: { safe: router.query.safe },
+    query: { safe: router.query.safe, chapeau: 'chapeau' },
   }
 
   const txLink = chain && localTxHash ? getBlockExplorerLink(chain, localTxHash) : undefined

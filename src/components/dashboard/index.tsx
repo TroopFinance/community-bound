@@ -1,7 +1,9 @@
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 import { Grid } from '@mui/material'
 import PendingTxsList from '@/components/dashboard/PendingTxs/PendingTxsList'
 import Overview from '@/components/dashboard/Overview/Overview'
+import ConfettiExplosion from 'react-confetti-explosion'
+
 import { FeaturedApps } from '@/components/dashboard/FeaturedApps/FeaturedApps'
 import SafeAppsDashboardSection from '@/components/dashboard/SafeAppsDashboardSection/SafeAppsDashboardSection'
 import GovernanceSection from '@/components/dashboard/GovernanceSection/GovernanceSection'
@@ -17,6 +19,16 @@ const Dashboard = (): ReactElement => {
   const router = useRouter()
   const supportsRelaying = useHasFeature(FEATURES.RELAYING)
   const { [CREATION_MODAL_QUERY_PARM]: showCreationModal = '' } = router.query
+  const [isExploding, setIsExploding] = useState(false)
+
+  // Check if the URL contains the string "chapeau"
+  const containsChapeau = router.asPath.includes('chapeau')
+
+  // Function to start the explosion
+  const startExplosion = () => {
+    setIsExploding(true)
+    setTimeout(() => setIsExploding(false), 2000) // Reset the explosion after 2 seconds
+  }
 
   return (
     <>
@@ -32,7 +44,14 @@ const Dashboard = (): ReactElement => {
         <Grid item xs={12} lg={supportsRelaying ? 6 : undefined}>
           <FeaturedApps stackedLayout={!!supportsRelaying} />
         </Grid>
-
+        {containsChapeau && (
+          <ConfettiExplosion
+            duration={2000}
+            style={{ position: 'absolute', bottom: '50%', right: '50%' }}
+            force={0.8}
+            onComplete={() => setIsExploding(false)}
+          />
+        )}
         {supportsRelaying ? (
           <Grid item xs={12} lg={6}>
             <Relaying />

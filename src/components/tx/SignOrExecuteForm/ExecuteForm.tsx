@@ -26,6 +26,11 @@ import commonCss from '@/components/tx-flow/common/styles.module.css'
 import { TxSecurityContext } from '../security/shared/TxSecurityContext'
 import useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import NonOwnerError from '@/components/tx/SignOrExecuteForm/NonOwnerError'
+import { useWeb3 } from '@/hooks/wallets/web3'
+import { ethers } from 'ethers'
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/config/constants'
+import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
+import useSafeInfo from '@/hooks/useSafeInfo'
 
 const ExecuteForm = ({
   safeTx,
@@ -40,6 +45,9 @@ const ExecuteForm = ({
   // Form state
   const [isSubmittable, setIsSubmittable] = useState<boolean>(true)
   const [submitError, setSubmitError] = useState<Error | undefined>()
+  const { safe, safeAddress } = useSafeInfo()
+
+  const addresses = safe.owners.map((address) => address.value)
 
   // Hooks
   const isOwner = useIsSafeOwner()
@@ -48,7 +56,6 @@ const ExecuteForm = ({
   const [relays] = useRelaysBySafe()
   const { setTxFlow } = useContext(TxModalContext)
   const { needsRiskConfirmation, isRiskConfirmed, setIsRiskIgnored } = useContext(TxSecurityContext)
-
   // Check that the transaction is executable
   const isCreation = !txId
   const isNewExecutableTx = useImmediatelyExecutable() && isCreation
@@ -88,6 +95,15 @@ const ExecuteForm = ({
     try {
       const executedTxId = await executeTx(txOptions, safeTx, txId, origin, willRelay)
       setTxFlow(<SuccessScreen txId={executedTxId} />, undefined, false)
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner()
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+        const tx = await contract.addMultipleCommunityMembers(addresses)
+        tx.wait()
+        const finalTx = await contract.mint(safeTx?.data.to, 20)
+        finalTx.wait()
+      }
     } catch (_err) {
       const err = asError(_err)
       logError(Errors._804, err)

@@ -8,6 +8,9 @@ import { isExecutable, isSignableBy } from '@/utils/transaction-guards'
 import { Typography } from '@mui/material'
 import { createExistingTx } from '@/services/tx/tx-sender'
 import { SafeTxContext } from '../../SafeTxProvider'
+import { useWeb3 } from '@/hooks/wallets/web3'
+import { ethers } from 'ethers'
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/config/constants'
 
 type ConfirmProposedTxProps = {
   txSummary: TransactionSummary
@@ -34,7 +37,7 @@ const ConfirmProposedTx = ({ txSummary }: ConfirmProposedTxProps): ReactElement 
   const text = canSign ? (canExecute ? SIGN_EXECUTE_TEXT : SIGN_TEXT) : EXECUTE_TEXT
 
   return (
-    <SignOrExecuteForm txId={txId} onSubmit={() => {}} isExecutable={canExecute} onlyExecute={!canSign}>
+    <SignOrExecuteForm txId={txId} onSubmit={async () => {}} isExecutable={canExecute} onlyExecute={!canSign}>
       <Typography mb={2}>{text}</Typography>
     </SignOrExecuteForm>
   )

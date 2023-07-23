@@ -12,18 +12,23 @@ import {
   Typography,
 } from '@mui/material'
 import axios from 'axios'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import * as PushAPI from '@pushprotocol/restapi'
 import ChatInput from './chatInput'
 import useSafeAddress from '@/hooks/useSafeAddress'
 import { motion } from 'framer-motion'
-import ConfettiExplosion from 'react-confetti-explosion'
 import { useWeb3 } from '@/hooks/wallets/web3'
 import useTxQueue from '@/hooks/useTxQueue'
 import { getLatestTransactions } from '@/utils/tx-list'
 import { AppRoutes } from '@/config/routes'
 import { useRouter } from 'next/router'
 import useSafeInfo from '@/hooks/useSafeInfo'
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/config/constants'
+interface DataObject {
+  data: any
+  rp: string
+  // Add other properties if needed
+}
 
 export interface IFeeds {
   msg: IMessageIPFS
@@ -170,26 +175,30 @@ const ChatFeed: React.FC = () => {
         }
       }
     `
-
-    try {
-      const response = await fetch(baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-        }),
-      })
-      const data = await response.json()
-      console.log({ data })
-      setDataList((prevDataList: any[]) => {
-        prevDataList?.length > 0 ? [...prevDataList, data] : [data]
-      })
-      return data
-    } catch (error) {
-      console.error(`Error fetching data for address ${address}:`, error)
-      return null
+    if (window.ethereum) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
+      const tx = await contract.balanceOf(address)
+      const rp = ethers.utils.formatUnits(tx, 'wei')
+      try {
+        const response = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+          }),
+        })
+        const data = await response.json()
+        setDataList((prevDataList: any[]) => {
+          prevDataList?.length > 0 ? [...prevDataList, { data, rp }] : [data]
+        })
+        return { data, rp }
+      } catch (error) {
+        console.error(`Error fetching data for address ${address}:`, error)
+        return null
+      }
     }
   }
 
@@ -198,8 +207,8 @@ const ChatFeed: React.FC = () => {
       try {
         const dataPromises = safe.owners?.map((address: { value: string }) => fetchData(address.value))
         const dataArray = await Promise.all(dataPromises)
-        const updatedDataList = dataArray.map((data, index) => {
-          return data?.identity ? data.identity : safe.owners[index].value
+        const updatedDataList = dataArray.map((data: any, index) => {
+          return { ...data, identity: data.identity ? data.identity : safe.owners[index].value }
         })
         setDataList(updatedDataList)
       } catch (error) {
@@ -210,7 +219,7 @@ const ChatFeed: React.FC = () => {
     }
 
     fetchAddressesData()
-  }, [])
+  }, [window.ethereum])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -327,11 +336,10 @@ const ChatFeed: React.FC = () => {
         <CircularProgress />
       </Container>
     )
-
+  console.log({ dataList })
   const handleButtonClick = () => {
     setIsExploding(true)
   }
-  console.log({ dataList })
   return (
     <Container
       sx={{
@@ -438,8 +446,8 @@ const ChatFeed: React.FC = () => {
           borderRadius: '8px',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
           padding: '12px', // To accommodate the height of the input box
         }}
       >
@@ -462,10 +470,10 @@ const ChatFeed: React.FC = () => {
             {membersLoading ? (
               <CircularProgress />
             ) : (
-              dataList?.map((member: string, index: number) => (
+              dataList?.map((member: { identity: string; rp: string }, index: number) => (
                 <>
                   <ListItemText
-                    key={index}
+                    key={member.identity}
                     sx={{
                       marginBottom: '16px',
                       textOverflow: 'clip',
@@ -474,14 +482,17 @@ const ChatFeed: React.FC = () => {
                       justifyContent: 'space-between', // Align items horizontally
                     }}
                     color="white"
-                    secondary={member}
+                    secondary={member.identity}
                     primary={
                       <Avatar
-                        src={avatarImageUrl(member)} // Random avatar based on member's value
+                        src={avatarImageUrl(member.identity)} // Random avatar based on member's value
                         sx={{ marginRight: '8px' }}
                       />
                     }
                   />
+                  <Typography sx={{ marginBottom: '16px' }} variant="h5" component="h5">
+                    RP: {member.rp}
+                  </Typography>
                 </>
               ))
             )}
