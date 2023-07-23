@@ -3,18 +3,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { useCurrentChain } from '@/hooks/useChains'
 import useOnboard, { connectWallet, getConnectedWallet } from '@/hooks/wallets/useOnboard'
 import { logError, Errors } from '@/services/exceptions'
-import {
-  getClientMeta,
-  PAIRING_MODULE_STORAGE_ID,
-  setPairingConnector,
-  usePairingConnector,
-  WalletConnectEvents,
-} from '@/services/pairing/connector'
+import { usePairingConnector, WalletConnectEvents } from '@/services/pairing/connector'
 import { PAIRING_MODULE_LABEL } from '@/services/pairing/module'
 import { formatPairingUri, isPairingSupported, killPairingSession } from '@/services/pairing/utils'
-import WalletConnect from '@walletconnect/client'
-import { WC_BRIDGE } from '@/config/constants'
-import local from '@/services/local-storage/local'
 
 /**
  * `useInitPairing` is responsible for WC session management, creating a session when:

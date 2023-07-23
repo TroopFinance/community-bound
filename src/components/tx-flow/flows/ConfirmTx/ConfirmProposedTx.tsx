@@ -8,9 +8,6 @@ import { isExecutable, isSignableBy } from '@/utils/transaction-guards'
 import { Typography } from '@mui/material'
 import { createExistingTx } from '@/services/tx/tx-sender'
 import { SafeTxContext } from '../../SafeTxProvider'
-import { useWeb3 } from '@/hooks/wallets/web3'
-import { ethers } from 'ethers'
-import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/config/constants'
 
 type ConfirmProposedTxProps = {
   txSummary: TransactionSummary

@@ -26,10 +26,8 @@ import commonCss from '@/components/tx-flow/common/styles.module.css'
 import { TxSecurityContext } from '../security/shared/TxSecurityContext'
 import useIsSafeOwner from '@/hooks/useIsSafeOwner'
 import NonOwnerError from '@/components/tx/SignOrExecuteForm/NonOwnerError'
-import { useWeb3 } from '@/hooks/wallets/web3'
 import { ethers } from 'ethers'
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/config/constants'
-import { SafeTxContext } from '@/components/tx-flow/SafeTxProvider'
 import useSafeInfo from '@/hooks/useSafeInfo'
 
 const ExecuteForm = ({

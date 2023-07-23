@@ -1,5 +1,5 @@
-import { CYPRESS_MNEMONIC, TREZOR_APP_URL, TREZOR_EMAIL, WC_BRIDGE, WC_PROJECT_ID } from '@/config/constants'
-import type { RecommendedInjectedWallets, WalletInit, WalletModule } from '@web3-onboard/common/dist/types.d'
+import { CYPRESS_MNEMONIC, TREZOR_APP_URL, TREZOR_EMAIL, WC_PROJECT_ID } from '@/config/constants'
+import type { RecommendedInjectedWallets, WalletInit } from '@web3-onboard/common/dist/types.d'
 import type { ChainInfo } from '@safe-global/safe-gateway-typescript-sdk'
 
 import coinbaseModule from '@web3-onboard/coinbase'

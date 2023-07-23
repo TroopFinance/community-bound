@@ -1,18 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Box,
-  Button,
-  Container,
-  CircularProgress,
-  Avatar,
-  Typography,
-} from '@mui/material'
-import axios from 'axios'
-import { BigNumber, ethers } from 'ethers'
+import { List, ListItemText, Container, CircularProgress, Avatar, Typography } from '@mui/material'
+import { ethers } from 'ethers'
 import * as PushAPI from '@pushprotocol/restapi'
 import ChatInput from './chatInput'
 import useSafeAddress from '@/hooks/useSafeAddress'

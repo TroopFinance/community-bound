@@ -21,7 +21,6 @@ import layoutCss from '@/components/new-safe/create/styles.module.css'
 import { AppRoutes } from '@/config/routes'
 import { lightPalette } from '@safe-global/safe-react-components'
 import { useCurrentChain } from '@/hooks/useChains'
-import { ethers } from 'ethers'
 import { useWeb3 } from '@/hooks/wallets/web3'
 
 export const SAFE_PENDING_CREATION_STORAGE_KEY = 'pendingSafe'
